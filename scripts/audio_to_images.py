@@ -13,15 +13,14 @@ from tqdm.auto import tqdm
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger("audio_to_images")
 
+
 def get_train_audio_files(metadata_path: str, base_path: str = ""):
     df = pd.read_csv(metadata_path)
 
     paths = []
     for _, row in df.iterrows():
-        paths.append(row['path'].split("data/")[-1])
+        paths.append(row['path'].split("data/")[-1].split("/wav/")[-1])
     return paths
-
-
 
 def main(args):
     mel = Mel(
@@ -41,14 +40,18 @@ def main(args):
         if re.search("\.(mp3|wav|m4a)$", file, re.IGNORECASE)
     ]
     if metadata_path:
+        print("start len", len(audio_files))
         print("sample filename", audio_files[-1])
         train_files = get_train_audio_files(metadata_path=metadata_path)
         print("sample train filename", train_files[-1])
-        audio_files = [file for file in audio_files if file.split("data/")[-1] in train_files]
+        train_files = set(train_files)
+        audio_files = [file for file in audio_files if file.split("data/")[-1].split("/wav/")[-1] in train_files]
+        print("len audio", len(audio_files))
 
     examples = []
     try:
         for audio_file in tqdm(audio_files):
+
             try:
                 mel.load_audio(audio_file)
             except KeyboardInterrupt:
